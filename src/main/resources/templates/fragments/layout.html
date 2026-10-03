@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="html_head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' · CampusCare'"></title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-2" th:fragment="navbar">
+        <div class="container-fluid px-4">
+            <!-- Brand -->
+            <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/dashboard}">
+                <span class="brand-badge"><i class="fa-solid fa-graduation-cap"></i></span>
+                <span class="brand-title">CampusCare</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Search & Quick Navigation -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" th:href="@{/dashboard}">
+                            <i class="fa-solid fa-chart-pie me-1 text-primary"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" th:href="@{/tickets}">
+                            <i class="fa-solid fa-ticket me-1 text-primary"></i> Tickets
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ROLE_STUDENT')">
+                        <a class="nav-link fw-semibold text-primary" th:href="@{/tickets/create}">
+                            <i class="fa-solid fa-plus-circle me-1"></i> New Request
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ROLE_ADMIN')">
+                        <a class="nav-link fw-semibold" th:href="@{/admin/staff}">
+                            <i class="fa-solid fa-users-gear me-1 text-primary"></i> Staff
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                        <a class="nav-link fw-semibold" th:href="@{/reports}">
+                            <i class="fa-solid fa-file-waveform me-1 text-primary"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ROLE_ADMIN')">
+                        <a class="nav-link fw-semibold" th:href="@{/settings}">
+                            <i class="fa-solid fa-sliders me-1 text-primary"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Right Side Actions -->
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notification Bell Dropdown -->
+                    <div class="dropdown" th:if="${currentUser != null}">
+                        <button class="btn btn-light position-relative rounded-circle p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px;">
+                            <i class="fa-regular fa-bell text-secondary"></i>
+                            <span th:if="${unreadNotificationCount > 0}" 
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  style="font-size: 0.65rem;"
+                                  th:text="${unreadNotificationCount}">
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                            <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <a th:href="@{/notifications}" class="text-decoration-none small text-primary">View all</a>
+                            </div>
+                            <div th:if="${#lists.isEmpty(navbarNotifications)}" class="text-center py-3 text-muted small">
+                                <i class="fa-regular fa-bell-slash mb-1 d-block fa-lg"></i>
+                                No notifications yet
+                            </div>
+                            <div th:each="n : ${navbarNotifications}" class="p-2 border-bottom small">
+                                <a th:href="@{'/tickets/' + ${n.ticket != null ? n.ticket.id : ''}}" class="text-decoration-none text-dark d-block">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-semibold text-primary" th:text="${n.type}"></span>
+                                        <span class="text-muted" style="font-size: 0.7rem;" th:text="${#temporals.format(n.createdAt, 'HH:mm')}"></span>
+                                    </div>
+                                    <div class="text-truncate text-secondary mt-1" th:text="${n.message}"></div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="dropdown" th:if="${currentUser != null}">
+                        <button class="btn btn-outline-light text-dark border d-flex align-items-center gap-2 py-1 px-3 rounded-pill" type="button" data-bs-toggle="dropdown">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                <span th:text="${#strings.substring(currentUser.fullName, 0, 1)}">U</span>
+                            </div>
+                            <div class="text-start d-none d-md-block">
+                                <div class="fw-semibold small lh-1" th:text="${currentUser.fullName}">User</div>
+                                <span class="badge bg-light text-secondary border mt-1" style="font-size: 0.65rem;" th:text="${currentUser.role.displayName}"></span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down small text-muted ms-1"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold small" th:text="${currentUser.fullName}"></div>
+                                <div class="text-muted small text-truncate" th:text="${currentUser.email}"></div>
+                            </li>
+                            <li><a class="dropdown-item py-2" th:href="@{/profile}"><i class="fa-regular fa-user me-2 text-muted"></i> My Profile</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/notifications}"><i class="fa-regular fa-bell me-2 text-muted"></i> Notifications</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="m-0">
+                                    <button type="submit" class="dropdown-item py-2 text-danger">
+                                        <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Not Logged In -->
+                    <div th:if="${currentUser == null}">
+                        <a th:href="@{/login}" class="btn btn-primary-custom btn-sm">Log in</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Global Flash Messages -->
+    <div class="container-fluid px-4 mt-3" th:fragment="alerts">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 border-0 shadow-sm" role="alert">
+            <i class="fa-solid fa-circle-check text-success fa-lg"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 border-0 shadow-sm" role="alert">
+            <i class="fa-solid fa-circle-exclamation text-danger fa-lg"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer th:fragment="footer">
+        <div class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div>
+                <strong>CampusCare</strong> &copy; 2026 Edumerge Solutions. Centralized Student Support &amp; Ticket Management System.
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-light text-secondary border">Assignment 4 · Product Prototype</span>
+                <span class="small text-muted"><i class="fa-solid fa-server me-1"></i> Spring Boot 3 &middot; MySQL 8</span>
+            </div>
+        </div>
+        <!-- Bootstrap JS Bundle -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </footer>
+</body>
+</html>

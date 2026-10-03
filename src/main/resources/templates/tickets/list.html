@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: html_head('Tickets')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Ticket Directory</h2>
+            <p class="text-muted mb-0 small">Browse, search, filter, and track support requests across departments.</p>
+        </div>
+        <div>
+            <a th:href="@{/tickets/create}" class="btn btn-primary-custom btn-sm">
+                <i class="fa-solid fa-plus-circle me-1"></i> Create Ticket
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom p-3 mb-4 bg-white">
+        <form th:action="@{/tickets}" method="get" class="row g-2 align-items-end">
+            <!-- Search -->
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">Search</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Ticket #, subject, student..." th:value="${currentSearch}">
+                </div>
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == currentCategory}"></option>
+                </select>
+            </div>
+
+            <!-- Status -->
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option th:each="s : ${allStatuses}" th:value="${s}" th:text="${s.displayName}" th:selected="${s == currentStatus}"></option>
+                </select>
+            </div>
+
+            <!-- Priority -->
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Priority</label>
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">All Priorities</option>
+                    <option th:each="p : ${allPriorities}" th:value="${p}" th:text="${p.displayName}" th:selected="${p == currentPriority}"></option>
+                </select>
+            </div>
+
+            <!-- Department (Staff/Admin) -->
+            <div class="col-md-2" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                <label class="form-label small fw-semibold text-secondary mb-1">Department</label>
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">All Departments</option>
+                    <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}" th:selected="${d.id == currentDepartment}"></option>
+                </select>
+            </div>
+
+            <!-- Submit / Reset buttons -->
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-custom btn-sm w-100" title="Apply Filters">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                <a th:href="@{/tickets}" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ticket List Table -->
+    <div class="card card-custom">
+        <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Subject &amp; Requester</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>SLA Status</th>
+                        <th>Created</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(tickets)}">
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fa-regular fa-folder-open fa-3x mb-2 text-secondary d-block"></i>
+                            No tickets found matching your query criteria.
+                        </td>
+                    </tr>
+                    <tr th:each="t : ${tickets}">
+                        <td>
+                            <a th:href="@{'/tickets/' + ${t.id}}" class="fw-bold text-primary text-decoration-none" th:text="${t.ticketNumber}">CC-2026-00001</a>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark text-truncate" style="max-width: 280px;" th:text="${t.subject}">Subject</div>
+                            <small class="text-muted">
+                                <i class="fa-regular fa-user me-1"></i><span th:text="${t.requester.fullName}">Requester</span>
+                                <span class="badge bg-light text-secondary border ms-1" th:text="${t.requester.studentOrEmployeeId}">ID</span>
+                            </small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border" th:text="${t.category.name}">Category</span>
+                        </td>
+                        <td>
+                            <span th:class="'badge-prio ' + ${t.priority.cssClass}" th:text="${t.priority.displayName}">Priority</span>
+                        </td>
+                        <td>
+                            <span th:class="'badge-status ' + ${t.status.cssClass}">
+                                <i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i>
+                                <span th:text="${t.status.displayName}">Status</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div th:if="${t.assignedTo != null}" class="d-flex align-items-center gap-1">
+                                <i class="fa-solid fa-user-check text-success small"></i>
+                                <span class="small fw-semibold text-dark" th:text="${t.assignedTo.fullName}">Assignee</span>
+                            </div>
+                            <span th:if="${t.assignedTo == null}" class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Unassigned
+                            </span>
+                        </td>
+                        <td>
+                            <span th:class="'badge-sla ' + ${t.getSlaStatus().cssClass}">
+                                <i class="fa-regular fa-clock" th:if="${t.getSlaStatus().name() != 'OVERDUE'}"></i>
+                                <i class="fa-solid fa-triangle-exclamation text-danger" th:if="${t.getSlaStatus().name() == 'OVERDUE'}"></i>
+                                <span th:text="${t.getSlaStatus().displayName}">SLA</span>
+                            </span>
+                        </td>
+                        <td class="text-muted small" th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy')}">Date</td>
+                        <td class="text-end">
+                            <a th:href="@{'/tickets/' + ${t.id}}" class="btn btn-outline-primary btn-sm">
+                                View <i class="fa-solid fa-angle-right ms-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center" th:if="${page.totalPages > 1}">
+            <div class="small text-muted">
+                Showing page <span class="fw-bold" th:text="${page.number + 1}">1</span> of <span class="fw-bold" th:text="${page.totalPages}">1</span>
+                (<span th:text="${page.totalElements}">0</span> total tickets)
+            </div>
+            <nav aria-label="Ticket pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link" th:href="@{/tickets(page=${page.number - 1}, search=${currentSearch}, category=${currentCategory}, status=${currentStatus}, priority=${currentPriority}, department=${currentDepartment})}">
+                            Previous
+                        </a>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link" th:text="${page.number + 1}">1</span>
+                    </li>
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link" th:href="@{/tickets(page=${page.number + 1}, search=${currentSearch}, category=${currentCategory}, status=${currentStatus}, priority=${currentPriority}, department=${currentDepartment})}">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

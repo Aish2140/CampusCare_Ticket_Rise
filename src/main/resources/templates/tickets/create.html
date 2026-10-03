@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('Create Support Ticket')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-custom p-4 p-md-5 border-0 shadow-sm">
+                <!-- Header -->
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="rounded-3 bg-primary-subtle text-primary p-3 fs-4">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0 text-dark">Raise a Support Ticket</h3>
+                        <p class="text-muted small mb-0">Fill in the request details below. A unique ticket number and SLA deadlines will be generated automatically.</p>
+                    </div>
+                </div>
+
+                <form th:action="@{/tickets/create}" th:object="${ticketDto}" method="post" enctype="multipart/form-data">
+                    <!-- Category Selection -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Support Category <span class="text-danger">*</span></label>
+                        <select th:field="*{categoryId}" class="form-select" required>
+                            <option value="">-- Choose Category --</option>
+                            <option th:each="c : ${categories}" th:value="${c.id}" 
+                                    th:text="${c.name} + ' (' + ${c.department.name} + ')'"></option>
+                        </select>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></div>
+                    </div>
+
+                    <!-- Priority Selection -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Urgency &amp; Priority Level <span class="text-danger">*</span></label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-3" th:each="p : ${priorities}">
+                                <input type="radio" class="btn-check" th:field="*{priority}" th:value="${p}" th:id="'prio_' + ${p}" required>
+                                <label class="btn btn-outline-secondary w-100 p-2 text-start" th:for="'prio_' + ${p}">
+                                    <div class="fw-bold small" th:text="${p.displayName}">Priority</div>
+                                    <small class="text-muted" style="font-size: 0.7rem;" th:if="${p.name() == 'URGENT'}">Response in 30m</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;" th:if="${p.name() == 'HIGH'}">Response in 2h</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;" th:if="${p.name() == 'MEDIUM'}">Response in 8h</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;" th:if="${p.name() == 'LOW'}">Response in 24h</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Subject / Request Summary <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{subject}" class="form-control" placeholder="Brief summary of your inquiry or problem" required minlength="5" maxlength="255">
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('subject')}" th:errors="*{subject}"></div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Detailed Description <span class="text-danger">*</span></label>
+                        <textarea th:field="*{description}" class="form-control" rows="5" placeholder="Please provide specific details, including relevant dates, reference numbers, course codes, or steps to reproduce..." required minlength="10"></textarea>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                    </div>
+
+                    <!-- Attachment (Optional) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-secondary small">Optional Document / Screenshot Attachment</label>
+                        <input type="file" name="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+                        <small class="text-muted">Accepted formats: PDF, PNG, JPG, DOC (Max size 10MB)</small>
+                    </div>
+
+                    <!-- Form Controls -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a th:href="@{/tickets}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary-custom px-4">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Submit Support Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('Reports & Analytics')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Institutional Support Analytics &amp; Reports</h2>
+            <p class="text-muted mb-0 small">Audit ticket performance, SLA compliance metrics, and operational distribution trends.</p>
+        </div>
+        <div>
+            <a th:href="@{/reports/export/csv}" class="btn btn-success btn-sm fw-semibold shadow-sm">
+                <i class="fa-solid fa-file-arrow-down me-1"></i> Download CSV Export
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Range Filter Form (FR-048) -->
+    <div class="card card-custom p-3 mb-4 bg-white">
+        <form th:action="@{/reports}" method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">From Date</label>
+                <input type="date" name="startDate" class="form-control form-control-sm" th:value="${startDate}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">To Date</label>
+                <input type="date" name="endDate" class="form-control form-control-sm" th:value="${endDate}">
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary-custom btn-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Filter Date Range
+                </button>
+                <a th:href="@{/reports}" class="btn btn-outline-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <span class="kpi-label">Volume in Period</span>
+                <div class="kpi-val text-primary" th:text="${report.totalVolume}">0</div>
+                <small class="text-muted">Tickets raised in selection</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <span class="kpi-label">Tickets Resolved</span>
+                <div class="kpi-val text-success" th:text="${report.resolvedCount}">0</div>
+                <small class="text-muted">Completed tickets</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <span class="kpi-label">SLA Compliance</span>
+                <div class="kpi-val text-success" th:text="${report.slaComplianceRate} + '%'">0%</div>
+                <small class="text-muted">On-time resolution rate</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <span class="kpi-label">Average Resolution</span>
+                <div class="kpi-val text-dark" th:text="${report.avgResolutionHours} + ' hrs'">0 hrs</div>
+                <small class="text-muted">Mean turnaround time</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom p-4 h-100">
+                <h6 class="fw-bold mb-3 text-dark">Category Distribution</h6>
+                <div style="height: 280px;">
+                    <canvas id="repCatChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-custom p-4 h-100">
+                <h6 class="fw-bold mb-3 text-dark">Status Distribution</h6>
+                <div style="height: 280px;">
+                    <canvas id="repStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+    const catData = /*[[${report.categoryBreakdown}]]*/ {};
+    const statusData = /*[[${report.statusBreakdown}]]*/ {};
+
+    new Chart(document.getElementById('repCatChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(catData),
+            datasets: [{
+                label: 'Volume',
+                data: Object.values(catData),
+                backgroundColor: '#4f46e5',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } },
+                x: { ticks: { maxRotation: 20, minRotation: 20, font: { size: 10 } } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('repStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(statusData),
+            datasets: [{
+                data: Object.values(statusData),
+                backgroundColor: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#94a3b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+/*]]>*/
+</script>
+</body>
+</html>

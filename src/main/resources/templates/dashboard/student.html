@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('Student Portal')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Welcome Banner with Create Ticket CTA -->
+    <div class="card card-custom p-4 p-md-5 mb-4 text-white border-0" 
+         style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-white text-primary fw-bold text-uppercase mb-2">Student Support Portal</span>
+                <h2 class="fw-bold mb-2">Hello, <span th:text="${currentUser.fullName}">Student</span>!</h2>
+                <p class="text-white-50 mb-4 mb-lg-0 lead fs-6">
+                    Need assistance with fees, attendance, ID cards, certificates, or technical facilities? Raise a ticket and track its progress in real-time.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a th:href="@{/tickets/create}" class="btn btn-light btn-lg text-primary fw-bold shadow-sm">
+                    <i class="fa-solid fa-plus-circle me-2"></i> Submit New Request
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="kpi-label">Total Submitted</span>
+                    <div class="kpi-icon-box bg-light text-primary"><i class="fa-solid fa-ticket"></i></div>
+                </div>
+                <div class="kpi-val" th:text="${stats.totalTickets}">0</div>
+                <small class="text-muted">Lifetime requests</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="kpi-label">Active / In Progress</span>
+                    <div class="kpi-icon-box bg-info-subtle text-info"><i class="fa-solid fa-spinner"></i></div>
+                </div>
+                <div class="kpi-val text-info" th:text="${stats.activeTickets}">0</div>
+                <small class="text-muted">Currently being processed</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi border-warning-subtle" th:classappend="${stats.waitingAction > 0} ? 'bg-warning-subtle bg-opacity-25' : ''">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="kpi-label text-warning">Requires Your Reply</span>
+                    <div class="kpi-icon-box bg-warning-subtle text-warning"><i class="fa-solid fa-comment-dots"></i></div>
+                </div>
+                <div class="kpi-val text-warning" th:text="${stats.waitingAction}">0</div>
+                <small class="text-muted" th:if="${stats.waitingAction > 0}">Staff requested information</small>
+                <small class="text-muted" th:if="${stats.waitingAction == 0}">No pending actions</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card-kpi">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="kpi-label">Resolved</span>
+                    <div class="kpi-icon-box bg-success-subtle text-success"><i class="fa-regular fa-circle-check"></i></div>
+                </div>
+                <div class="kpi-val text-success" th:text="${stats.resolvedTickets}">0</div>
+                <small class="text-muted">Successfully completed</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student's Requests Table -->
+    <div class="card card-custom">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-dark">Your Recent Support Requests</h6>
+            <a th:href="@{/tickets}" class="btn btn-outline-primary btn-sm">All My Requests</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Subject</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(stats.recentTickets)}">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-regular fa-folder-open fa-3x mb-2 text-secondary d-block"></i>
+                            You haven't submitted any support requests yet.
+                            <div class="mt-3">
+                                <a th:href="@{/tickets/create}" class="btn btn-primary-custom btn-sm">
+                                    <i class="fa-solid fa-plus me-1"></i> Submit First Ticket
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:each="t : ${stats.recentTickets}">
+                        <td>
+                            <a th:href="@{'/tickets/' + ${t.id}}" class="fw-bold text-primary text-decoration-none" th:text="${t.ticketNumber}">CC-2026-00001</a>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark text-truncate" style="max-width: 380px;" th:text="${t.subject}">Subject</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border" th:text="${t.category.name}">Category</span>
+                        </td>
+                        <td>
+                            <span th:class="'badge-status ' + ${t.status.cssClass}">
+                                <i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i>
+                                <span th:text="${t.status.displayName}">Status</span>
+                            </span>
+                        </td>
+                        <td class="text-muted small" th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy HH:mm')}">Date</td>
+                        <td>
+                            <a th:href="@{'/tickets/' + ${t.id}}" class="btn btn-outline-secondary btn-sm">
+                                View Details <i class="fa-solid fa-angle-right ms-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

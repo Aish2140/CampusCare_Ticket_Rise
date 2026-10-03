@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('System Settings')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1 text-dark">Institutional Settings &amp; SLA Policies</h2>
+        <p class="text-muted mb-0 small">Configure response targets, resolution SLA policies, support categories, and departments.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- SLA Policies Card -->
+        <div class="col-lg-7">
+            <div class="card card-custom p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">SLA Policies by Priority</h5>
+                        <small class="text-muted">Target clock minutes for first staff response and final ticket resolution</small>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>1st Response Target</th>
+                                <th>Resolution Target</th>
+                                <th>Pause on Student</th>
+                                <th class="text-end">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sla : ${slaPolicies}">
+                                <td>
+                                    <span th:class="'badge-prio ' + ${sla.priority.cssClass}" th:text="${sla.priority.displayName}">Priority</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark" th:text="${sla.firstResponseMinutes} + ' mins'">0 mins</span>
+                                    <small class="text-muted d-block" th:if="${sla.firstResponseMinutes >= 60}" th:text="'(' + ${sla.firstResponseMinutes / 60} + ' hrs)'"></small>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark" th:text="${sla.resolutionMinutes} + ' mins'">0 mins</span>
+                                    <small class="text-muted d-block" th:if="${sla.resolutionMinutes >= 60}" th:text="'(' + ${sla.resolutionMinutes / 60} + ' hrs)'"></small>
+                                </td>
+                                <td>
+                                    <span th:if="${sla.pauseWhileWaiting}" class="badge bg-success-subtle text-success">
+                                        <i class="fa-solid fa-pause me-1"></i> Enabled
+                                    </span>
+                                    <span th:if="${!sla.pauseWhileWaiting}" class="badge bg-secondary-subtle text-secondary">Disabled</span>
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                            data-bs-toggle="modal" th:data-bs-target="'#editSlaModal_' + ${sla.id}">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Department Directory Card -->
+            <div class="card card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Institutional Departments</h5>
+                        <small class="text-muted">Academic and administrative operating units</small>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newDeptModal">
+                        <i class="fa-solid fa-plus me-1"></i> Add Department
+                    </button>
+                </div>
+
+                <div class="list-group list-group-flush">
+                    <div th:each="d : ${departments}" class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                        <div>
+                            <div class="fw-bold text-dark small" th:text="${d.name}">Department Name</div>
+                            <small class="text-muted" th:text="${d.description}">Description</small>
+                        </div>
+                        <span class="badge bg-light text-secondary border">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Categories Card -->
+        <div class="col-lg-5">
+            <div class="card card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Ticket Categories</h5>
+                        <small class="text-muted">Available support categories</small>
+                    </div>
+                    <button type="button" class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                        <i class="fa-solid fa-plus me-1"></i> Add Category
+                    </button>
+                </div>
+
+                <div class="list-group list-group-flush">
+                    <div th:each="c : ${categories}" class="list-group-item px-0 py-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="fw-bold text-dark" th:text="${c.name}">Category Name</span>
+                            <span class="badge bg-primary-subtle text-primary small" th:text="${c.department.name}">Dept</span>
+                        </div>
+                        <small class="text-muted d-block" th:text="${c.description}">Description</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Category -->
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/settings/categories/create}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Support Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Category Name</label>
+                        <input type="text" name="name" class="form-control" required placeholder="e.g. Scholarship Inquiries">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Responsible Department</label>
+                        <select name="departmentId" class="form-select" required>
+                            <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Brief scope of this category..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-custom btn-sm px-4">Create Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Department -->
+<div class="modal fade" id="newDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/settings/departments/create}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Department Name</label>
+                        <input type="text" name="name" class="form-control" required placeholder="e.g. Health &amp; Wellness">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Scope and purpose of this department..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-custom btn-sm px-4">Create Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modals for Editing SLA Policy for each priority -->
+<div th:each="sla : ${slaPolicies}">
+    <div class="modal fade" th:id="'editSlaModal_' + ${sla.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/settings/sla/update}" method="post">
+                    <input type="hidden" name="id" th:value="${sla.id}">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Edit SLA Policy · <span th:text="${sla.priority.displayName}">Priority</span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">First Response Target (in minutes)</label>
+                            <input type="number" name="firstResponseMinutes" class="form-control" th:value="${sla.firstResponseMinutes}" required min="5">
+                            <small class="text-muted">Example: 30 = 30 mins, 120 = 2 hours, 1440 = 24 hours</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">Resolution Target (in minutes)</label>
+                            <input type="number" name="resolutionMinutes" class="form-control" th:value="${sla.resolutionMinutes}" required min="15">
+                            <small class="text-muted">Example: 240 = 4 hours, 1440 = 24 hours, 2880 = 48 hours</small>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="pauseWhileWaiting" value="true" th:id="'pause_' + ${sla.id}" th:checked="${sla.pauseWhileWaiting}">
+                            <label class="form-check-label small fw-semibold text-secondary" th:for="'pause_' + ${sla.id}">
+                                Pause SLA resolution timer while Waiting for Student (FR-036)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-custom btn-sm px-4">Save SLA Policy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

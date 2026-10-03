@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('Error')}"></head>
+<body class="bg-light d-flex align-items-center justify-content-center min-vh-100 py-5">
+<div class="text-center p-4">
+    <div class="display-1 fw-bold text-warning mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 class="fw-bold text-dark mb-2">Operation Error</h3>
+    <p class="text-muted mb-4" th:text="${errorMessage != null ? errorMessage : 'An unexpected error occurred during processing.'}"></p>
+    <a th:href="@{/dashboard}" class="btn btn-primary-custom px-4">
+        <i class="fa-solid fa-house me-2"></i> Return to Dashboard
+    </a>
+</div>
+</body>
+</html>

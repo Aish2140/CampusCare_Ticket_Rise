@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: html_head('404 - Not Found')}"></head>
+<body class="bg-light d-flex align-items-center justify-content-center min-vh-100 py-5">
+<div class="text-center p-4">
+    <div class="display-1 fw-bold text-primary mb-2">404</div>
+    <h3 class="fw-bold text-dark mb-2">Page or Resource Not Found</h3>
+    <p class="text-muted mb-4" th:text="${errorMessage != null ? errorMessage : 'The requested ticket, record, or URL does not exist or has been removed.'}"></p>
+    <a th:href="@{/dashboard}" class="btn btn-primary-custom px-4">
+        <i class="fa-solid fa-house me-2"></i> Return to Dashboard
+    </a>
+</div>
+</body>
+</html>
