@@ -10,7 +10,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	
-	<groupId>com.edumerge</groupId>
+	<groupId>com.campuscare</groupId>
 	<artifactId>campuscare</artifactId>
 	<version>1.0.0</version>
 	<name>CampusCare</name>
